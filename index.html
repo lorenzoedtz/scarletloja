@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Downloader</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Video Downloader</h1>
+        <p>Insira a URL e escolha o formato:</p>
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="messages">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('download') }}" method="post">
+            <input type="text" name="url" placeholder="Cole a URL aqui" required>
+            <div class="radio-group">
+                <input type="radio" id="mp3" name="format" value="mp3" checked>
+                <label for="mp3">MP3</label>
+                <input type="radio" id="mp4" name="format" value="mp4">
+                <label for="mp4">MP4</label>
+            </div>
+            <button type="submit">Baixar</button>
+        </form>
+
+        <!-- Barra de progresso -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
+    </div>
+
+    <script>
+        // Função para atualizar a barra de progresso
+        function atualizarProgresso() {
+            fetch('{{ url_for("progress") }}')
+                .then(response => response.json())
+                .then(data => {
+                    let progressBar = document.getElementById('progress-bar');
+                    if (data.total > 0) {
+                        let percent = Math.round((data.downloaded / data.total) * 100);
+                        progressBar.style.width = percent + '%';
+                        progressBar.textContent = percent + '%';
+                    }
+                    if (data.status === 'downloading') {
+                        setTimeout(atualizarProgresso, 1000);
+                    }
+                })
+                .catch(error => console.error('Erro ao atualizar progresso:', error));
+        }
+
+        // Inicia o polling de progresso assim que a página for carregada
+        atualizarProgresso();
+    </script>
+</body>
+</html>
